@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосовой Сортировщик</title>
+    <style>
+        /* --- ОБЩИЕ СТИЛИ --- */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { width: 90%; max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1, h2 { color: #444; text-align: center; }
+
+        /* --- СТИЛИ КОНСТРУКТОРА (без изменений) --- */
+        #setup-container .form-group { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        #setup-container .form-group label { font-weight: bold; min-width: 120px; }
+        #setup-container .form-group input, #setup-container .form-group select { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* --- НОВЫЕ СТИЛИ СОРТИРОВЩИКА --- */
+        #sorter-container { display: none; }
+        
+        /* Верхняя панель управления */
+        #top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        #top-controls button {
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #settings-btn { background-color: #6c757d; color: white; }
+        #settings-btn:hover { background-color: #5a6268; }
+        
+        #power-btn { font-weight: bold; }
+        #power-btn.off { background-color: #ffc107; color: #333; }
+        #power-btn.on { background-color: #28a745; color: white; }
+
+        /* Центральная область подсказок */
+        #main-prompt-area {
+            min-height: 150px;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .prompt-row {
+            font-size: 24px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .prompt-row .prompt-keywords {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .prompt-row .prompt-keywords span {
+            font-size: 16px;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+        
+        /* Состояния подсказок */
+        .prompt-row.pending { color: #adb5bd; }
+        .prompt-row.active { color: #856404; font-weight: bold; }
+        .prompt-row.active .prompt-keywords span { background-color: #fff3cd; }
+        .prompt-row.filled { color: #155724; }
+        .prompt-row.filled .value { font-weight: bold; margin-left: 10px; }
+
+        /* Нижняя область статистики */
+        #bottom-stats { text-align: center; }
+        #dashboard-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; background-color: #e9ecef; padding: 15px; border-radius: 8px; margin-top: 20px; margin-bottom: 20px; }
+        .dashboard-item { background: #fff; padding: 10px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; }
+        .dashboard-item .value { font-size: 22px; font-weight: bold; color: #007bff; }
+        .dashboard-item .label { font-size: 14px; color: #6c757d; }
+        #result-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        #result-table th, #result-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        #result-table th { background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Голосовой Сортировщик</h1>
+    <div id="setup-container" class="container"></div>
+
+    <div id="sorter-container" class="container">
+        <div id="top-controls">
+            <button id="settings-btn">&larr; Настройки</button>
+            <button id="power-btn" class="off">Включить</button>
+        </div>
+
+        <div id="main-prompt-area">
+            <!-- Динамически генерируемые подсказки -->
+        </div>
+
+        <div id="bottom-stats">
+            <h3>Статистика смены</h3>
+            <div id="dashboard-container"></div>
+            <h3>Результаты сортировки</h3>
+            <table id="result-table">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    // ======================= КОНФИГУРАЦИЯ И КОНСТРУКТОР (без изменений) =======================
+    const CONFIG_STORAGE_KEY = 'voiceSorterConfig_v2';
+    const defaultConfigs = { 'ru-RU': { language: 'ru-RU', fields: [ { id: 'condition', name: 'Состояние', values: [ { value: 'Годен', keywords: ['годен', 'хорошо'] }, { value: 'Брак', keywords: ['брак', 'дефект'] } ] }, { id: 'size', name: 'Размер', values: [ { value: 'S', keywords: ['эска', 'маленький'] }, { value: 'M', keywords: ['эмка', 'средний'] }, { value: 'L', keywords: ['элька', 'большой'] } ] } ] }, 'en-US': { language: 'en-US', fields: [ { id: 'condition', name: 'Condition', values: [ { value: 'Good', keywords: ['good', 'ok'] }, { value: 'Defect', keywords: ['defect', 'broken'] } ] }, { id: 'size', name: 'Size', values: [ { value: 'S', keywords: ['small', 'size s'] }, { value: 'M', keywords: ['medium'] }, { value: 'L', keywords: ['large'] } ] } ] }};
+    let config = {};
+    function saveConfig() { localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config)); }
+    function loadConfig() { const s = localStorage.getItem(CONFIG_STORAGE_KEY); config = s ? JSON.parse(s) : JSON.parse(JSON.stringify(defaultConfigs['ru-RU'])); }
+    const setupContainer = document.getElementById('setup-container');
+    function renderSetupUI() { let langOptions = ''; Object.keys(defaultConfigs).forEach(langCode => { const langName = defaultConfigs[langCode].language.split('-')[0]; const langDisplayName = new Intl.DisplayNames(['en'], { type: 'language' }).of(langName); langOptions += `<option value="${langCode}" ${config.language === langCode ? 'selected' : ''}>${langDisplayName} (${langCode})</option>`; }); let fieldsHTML = ''; config.fields.forEach((field, fieldIndex) => { let valuesHTML = field.values.map((val, valueIndex) => `<div class="form-group"><input type="text" value="${val.value}" placeholder="Значение" data-action="update" data-type="value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><input type="text" value="${val.keywords.join(', ')}" placeholder="Ключевые слова" data-action="update" data-type="keywords" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><button class="secondary" data-action="remove-value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}">X</button></div>`).join(''); fieldsHTML += `<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 15px;"><h3>Поле: "${field.name}" <button class="secondary" style="float:right;" data-action="remove-field" data-field-index="${fieldIndex}">Удалить поле</button></h3>${valuesHTML}<button data-action="add-value" data-field-index="${fieldIndex}">Добавить значение</button></div>`; }); setupContainer.innerHTML = `<h2>Шаг 1: Настройте поля и язык</h2><div class="form-group"><label for="language-select">Язык:</label><select id="language-select">${langOptions}</select></div><hr style="margin: 20px 0;"><p style="text-align: center;">Настройте поля и ключевые слова для выбранного языка.</p><div id="fields-list">${fieldsHTML}</div><div style="background-color: #f0f8ff; padding: 15px; border-radius: 8px;"><h3>Добавить новое поле</h3><div class="form-group"><label for="new-field-name">Название поля:</label><input type="text" id="new-field-name"></div><button data-action="add-field">Добавить поле</button></div><button id="reset-config-btn" class="secondary" style="margin-top: 20px;">Сбросить настройки для языка</button><button id="start-working-btn">Шаг 2: Начать сортировку</button>`;}
+    setupContainer.addEventListener('click', (e) => { const action = e.target.dataset.action; if (!action && e.target.id !== 'reset-config-btn' && e.target.id !== 'start-working-btn') return; if (action === 'add-value') { config.fields[e.target.dataset.fieldIndex].values.push({ value: '', keywords: [] }); } else if (action === 'remove-value') { config.fields[e.target.dataset.fieldIndex].values.splice(e.target.dataset.valueIndex, 1); } else if (action === 'remove-field') { config.fields.splice(e.target.dataset.fieldIndex, 1); } else if (action === 'add-field') { const nameInput = document.getElementById('new-field-name'); const n = nameInput.value.trim(); if(n) { config.fields.push({ id: n.toLowerCase().replace(/[^a-z0-9]/g, '_') + Date.now(), name: n, values: [] }); } } else if (e.target.id === 'reset-config-btn') { if (confirm("Сбросить настройки для языка " + config.language + "?")) { config = JSON.parse(JSON.stringify(defaultConfigs[config.language] || defaultConfigs['en-US'])); saveConfig(); renderSetupUI(); } return; } else if (e.target.id === 'start-working-btn') { initializeSorter(); return; } saveConfig(); renderSetupUI(); });
+    setupContainer.addEventListener('change', (e) => { const { action, type, fieldIndex, valueIndex } = e.target.dataset; if (action === 'update') { if (type === 'keywords') { config.fields[fieldIndex].values[valueIndex][type] = e.target.value.split(',').map(kw => kw.trim().toLowerCase()).filter(Boolean); } else { config.fields[fieldIndex].values[valueIndex][type] = e.target.value; } saveConfig(); } else if (e.target.id === 'language-select') { const newLang = e.target.value; if (newLang !== config.language) { if (confirm(`Сменить язык на ${newLang} и загрузить примеры? Текущие поля будут заменены.`)) { config = JSON.parse(JSON.stringify(defaultConfigs[newLang] || defaultConfigs['en-US'])); saveConfig(); renderSetupUI(); } else { e.target.value = config.language; } } } });
+
+    // ======================= ЛОГИКА СОРТИРОВЩИКА =======================
+    const sorterContainer = document.getElementById('sorter-container');
+    let stats = {};
+    const dashboardContainer = document.getElementById('dashboard-container');
+    let currentItem = {}; let itemIdCounter = 1; let currentFieldIndex = 0;
+    let isListening = false; let isSessionActive = false; let isWaitingForTrigger = true;
+    const powerBtn = document.getElementById('power-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const mainPromptArea = document.getElementById('main-prompt-area');
+    const tableHead = document.querySelector("#result-table thead"); const tableBody = document.querySelector("#result-table tbody");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) { recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = false; recognition.onstart = () => { isListening = true; }; recognition.onresult = (event) => { const command = event.results[event.results.length - 1][0].transcript; console.log('Распознано: "' + command.toLowerCase().trim() + '"'); processCommand(command); }; recognition.onend = () => { isListening = false; if (isSessionActive) { try { recognition.start(); } catch(e){}}}; recognition.onerror = (event) => { console.error("Ошибка распознавания:", event.error); isSessionActive = false; updatePowerButton(); renderPrompts(); }; }
+    
+    function initializeSorter() { if (!SpeechRecognition) { alert("Браузер не поддерживает речь"); return; } if (config.fields.length === 0) { alert("Добавьте поля!"); return; } recognition.lang = config.language; tableHead.innerHTML = `<tr><th>ID</th>${config.fields.map(f => `<th>${f.name}</th>`).join('')}</tr>`; tableBody.innerHTML = ''; itemIdCounter = 1; initDashboard(); resetCurrentItemToIdle(); setupContainer.style.display = 'none'; sorterContainer.style.display = 'block'; }
+    function resetCurrentItemToIdle() { currentItem = {}; isWaitingForTrigger = true; renderPrompts(); }
+    
+    function renderPrompts() {
+        mainPromptArea.innerHTML = '';
+        if (!isSessionActive) {
+            mainPromptArea.innerHTML = `<div class="prompt-row pending">Нажмите "Включить" для начала работы</div>`;
+            return;
+        }
+
+        config.fields.forEach((field, index) => {
+            const promptRow = document.createElement('div');
+            promptRow.className = 'prompt-row';
+            const value = currentItem[field.id];
+
+            if (value) {
+                // Поле уже заполнено
+                promptRow.classList.add('filled');
+                promptRow.innerHTML = `<span>${field.name}:</span><span class="value">${value}</span>`;
+            } else if (index === currentFieldIndex && !isWaitingForTrigger) {
+                // Текущий активный шаг
+                promptRow.classList.add('active');
+                let keywordsHTML = field.values.map(val => `<span>${val.keywords.join(' / ')}</span>`).join('');
+                promptRow.innerHTML = `<span>Скажите ${field.name.toLowerCase()}</span><div class="prompt-keywords">${keywordsHTML}</div>`;
+            } else {
+                // Ожидающий шаг
+                promptRow.classList.add('pending');
+                promptRow.textContent = field.name;
+            }
+            mainPromptArea.appendChild(promptRow);
+        });
+
+        if (isWaitingForTrigger) {
+            mainPromptArea.innerHTML = `<div class="prompt-row active">Скажите "Новый товар"</div>`;
+        }
+    }
+
+    function processCommand(text) { const command = text.toLowerCase().trim(); const triggerWords = {"ru-RU": "новый товар", "en-US": "next item"}; const resetWords = {"ru-RU": "сброс", "en-US": "reset"}; const skipWords = {"ru-RU": "пропустить", "en-US": "skip"}; if (command.includes(resetWords[config.language])) { resetCurrentItemToIdle(); return; } if (isWaitingForTrigger) { if (command.includes(triggerWords[config.language])) { isWaitingForTrigger = false; currentFieldIndex = 0; let paramsFound = parseAllParams(command); if (paramsFound) { saveCurrentItem(); } else { renderPrompts(); } } } else { let processed = false; if (command.includes(skipWords[config.language]) && currentFieldIndex < config.fields.length) { currentFieldIndex++; processed = true; } else if (currentFieldIndex < config.fields.length) { const field = config.fields[currentFieldIndex]; for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; currentFieldIndex++; processed = true; break; } } if (processed) break; } } if (processed) { if (currentFieldIndex >= config.fields.length) { saveCurrentItem(); } else { renderPrompts(); } } } }
+    function saveCurrentItem() { const newRow = tableBody.insertRow(0); let rowHTML = `<td>${itemIdCounter}</td>`; config.fields.forEach(field => { rowHTML += `<td>${currentItem[field.id] || 'Пропущено'}</td>`; }); newRow.innerHTML = rowHTML; itemIdCounter++; updateDashboard(); resetCurrentItemToIdle(); }
+    function parseAllParams(command) { let foundSomething = false; config.fields.forEach(field => { for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; foundSomething = true; break; } } } }); if (foundSomething) renderPrompts(); return foundSomething; }
+    function initDashboard() { stats = { total: 0 }; config.fields.forEach(field => { stats[field.id] = {}; field.values.forEach(val => { stats[field.id][val.value] = 0; }); }); renderDashboard(); }
+    function updateDashboard() { stats.total++; config.fields.forEach(field => { const value = currentItem[field.id]; if (value && stats[field.id].hasOwnProperty(value)) { stats[field.id][value]++; } }); renderDashboard(); }
+    function renderDashboard() { dashboardContainer.innerHTML = `<div class="dashboard-item"><div class="value">${stats.total}</div><div class="label">Всего</div></div>`; Object.keys(stats).forEach(statKey => { if(statKey === 'total') return; Object.keys(stats[statKey]).forEach(valueKey => { dashboardContainer.innerHTML += `<div class="dashboard-item"><div class="value">${stats[statKey][valueKey]}</div><div class="label">${valueKey}</div></div>`; }); }); }
+    
+    function updatePowerButton() {
+        if(isSessionActive) {
+            powerBtn.textContent = 'Выключить';
+            powerBtn.className = 'on';
+        } else {
+            powerBtn.textContent = 'Включить';
+            powerBtn.className = 'off';
+        }
+    }
+
+    // --- Инициализация и обработчики кнопок ---
+    powerBtn.addEventListener('click', () => {
+        isSessionActive = !isSessionActive;
+        if(isSessionActive) {
+            if (recognition) recognition.start();
+        } else {
+            if (recognition) recognition.stop();
+        }
+        resetCurrentItemToIdle();
+        updatePowerButton();
+    });
+
+    settingsBtn.addEventListener('click', () => {
+        if(isSessionActive) {
+            isSessionActive = false;
+            if (recognition) recognition.stop();
+            updatePowerButton();
+        }
+        sorterContainer.style.display = 'none';
+        setupContainer.style.display = 'block';
+    });
+    
+    loadConfig();
+    renderSetupUI();
+    </script>
+</body>
+</html>
