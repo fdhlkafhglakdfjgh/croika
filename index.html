@@ -3,222 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Голосовой Сортировщик</title>
+    <title>Голосовой Инспектор (Контроль качества)</title>
     <style>
-        /* --- ОБЩИЕ СТИЛИ --- */
+        /* Стили без изменений, свернуты */
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f4f9; color: #333; }
-        .container { width: 90%; max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1, h2 { color: #444; text-align: center; }
-
-        /* --- СТИЛИ КОНСТРУКТОРА (без изменений) --- */
-        #setup-container .form-group { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        #setup-container .form-group label { font-weight: bold; min-width: 120px; }
-        #setup-container .form-group input, #setup-container .form-group select { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-
-        /* --- НОВЫЕ СТИЛИ СОРТИРОВЩИКА --- */
-        #sorter-container { display: none; }
-        
-        /* Верхняя панель управления */
-        #top-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        #top-controls button {
-            font-size: 16px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        #settings-btn { background-color: #6c757d; color: white; }
-        #settings-btn:hover { background-color: #5a6268; }
-        
-        #power-btn { font-weight: bold; }
-        #power-btn.off { background-color: #ffc107; color: #333; }
-        #power-btn.on { background-color: #28a745; color: white; }
-
-        /* Центральная область подсказок */
-        #main-prompt-area {
-            min-height: 150px;
-            margin-bottom: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        .prompt-row {
-            font-size: 24px;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        .prompt-row .prompt-keywords {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .prompt-row .prompt-keywords span {
-            font-size: 16px;
-            background-color: #e9ecef;
-            color: #495057;
-            padding: 8px 15px;
-            border-radius: 20px;
-        }
-        
-        /* Состояния подсказок */
-        .prompt-row.pending { color: #adb5bd; }
-        .prompt-row.active { color: #856404; font-weight: bold; }
-        .prompt-row.active .prompt-keywords span { background-color: #fff3cd; }
-        .prompt-row.filled { color: #155724; }
-        .prompt-row.filled .value { font-weight: bold; margin-left: 10px; }
-
-        /* Нижняя область статистики */
-        #bottom-stats { text-align: center; }
-        #dashboard-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; background-color: #e9ecef; padding: 15px; border-radius: 8px; margin-top: 20px; margin-bottom: 20px; }
-        .dashboard-item { background: #fff; padding: 10px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; }
-        .dashboard-item .value { font-size: 22px; font-weight: bold; color: #007bff; }
-        .dashboard-item .label { font-size: 14px; color: #6c757d; }
-        #result-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        #result-table th, #result-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        #result-table th { background-color: #007bff; color: white; }
+        .container { width: 90%; max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px;}
+        h1, h2, h3 { color: #333; text-align: center; }
+        button { font-size: 16px; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .start-button-green { background-color: #28a745; border-color: #28a745; padding: 15px; font-size: 18px; width: 100%; margin-top: 20px; }
+        .start-button-green:hover { background-color: #218838; }
+        .instruction-box { background-color: #e9ecef; border: 1px solid #dee2e6; padding: 20px; margin-bottom: 25px; border-radius: 8px; }
+        .instruction-box h3 { margin-top: 0; color: #007bff; }
+        .instruction-box p { line-height: 1.6; margin-bottom: 5px; }
+        button.secondary { background-color: #6c757d; } #stopBtn { background-color: #dc3545; } .form-group { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; } .form-group label { font-weight: bold; min-width: 120px; } .form-group input, .form-group select { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; } #sorter-container { display: none; } #controls { margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; } #status { font-size: 18px; font-weight: bold; margin-bottom: 20px; height: 30px; text-align: center; } .status-listening { color: #28a745; } .status-error { color: #dc3545; } .hint-keyword { background-color: #fff3cd; color: #856404; padding: 8px 15px; border-radius: 20px; border: 1px solid #ffeeba; font-weight: 500;} .hint-keyword.command { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; } #dashboard-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6;} .dashboard-item { background: #fff; padding: 10px 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center; } .dashboard-item .value { font-size: 22px; font-weight: bold; color: #007bff; } .dashboard-item .label { font-size: 14px; color: #6c757d; } .sorter-settings { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;}
     </style>
 </head>
 <body>
-    <h1>Голосовой Сортировщик</h1>
-    <div id="setup-container" class="container"></div>
-
+    <h1>Голосовой Инспектор</h1>
+    <div id="setup-container" class="container">
+        <!-- Контент генерируется JS -->
+    </div>
+    <!-- ИЗМЕНЕНО: HTML-код инспектора теперь всегда здесь, просто скрыт -->
     <div id="sorter-container" class="container">
-        <div id="top-controls">
-            <button id="settings-btn">&larr; Настройки</button>
-            <button id="power-btn" class="off">Включить</button>
+        <button id="back-to-setup-btn" class="secondary" style="float: right;">&larr; Настройки</button>
+        <h2>Голосовой Инспектор</h2>
+        <h3>Статистика проверки</h3>
+        <div id="dashboard-container"></div>
+        <div id="controls">
+            <button id="startBtn">Начать смену</button>
+            <button id="stopBtn" style="display: none;">Закончить смену</button>
         </div>
-
-        <div id="main-prompt-area">
-            <!-- Динамически генерируемые подсказки -->
+        <div class="sorter-settings">
+            <label for="tts-toggle">Включить голосовые ответы:</label>
+            <input type="checkbox" id="tts-toggle" checked>
         </div>
-
-        <div id="bottom-stats">
-            <h3>Статистика смены</h3>
-            <div id="dashboard-container"></div>
-            <h3>Результаты сортировки</h3>
-            <table id="result-table">
-                <thead></thead>
-                <tbody></tbody>
-            </table>
+        <div id="status">Нажмите "Начать смену".</div>
+        <h3>Текущий объект</h3>
+        <div id="current-item-display"></div>
+        <div id="guidance-container">
+            <h3 id="current-step-header"></h3>
+            <div id="hints-container"></div>
         </div>
+        <div id="transcript-container"><strong>Последняя команда:</strong> <span id="transcript">...</span></div>
+        <h3>Результаты проверки</h3>
+        <table id="result-table">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <script>
-    // ======================= КОНФИГУРАЦИЯ И КОНСТРУКТОР (без изменений) =======================
-    const CONFIG_STORAGE_KEY = 'voiceSorterConfig_v2';
-    const defaultConfigs = { 'ru-RU': { language: 'ru-RU', fields: [ { id: 'condition', name: 'Состояние', values: [ { value: 'Годен', keywords: ['годен', 'хорошо'] }, { value: 'Брак', keywords: ['брак', 'дефект'] } ] }, { id: 'size', name: 'Размер', values: [ { value: 'S', keywords: ['эска', 'маленький'] }, { value: 'M', keywords: ['эмка', 'средний'] }, { value: 'L', keywords: ['элька', 'большой'] } ] } ] }, 'en-US': { language: 'en-US', fields: [ { id: 'condition', name: 'Condition', values: [ { value: 'Good', keywords: ['good', 'ok'] }, { value: 'Defect', keywords: ['defect', 'broken'] } ] }, { id: 'size', name: 'Size', values: [ { value: 'S', keywords: ['small', 'size s'] }, { value: 'M', keywords: ['medium'] }, { value: 'L', keywords: ['large'] } ] } ] }};
+    // ======================= УПРАВЛЕНИЕ КОНФИГУРАЦИЕЙ =======================
+    const CONFIG_STORAGE_KEY = 'voiceInspectorConfig_v1';
+    const defaultConfigs = {
+        'ru-RU': { language: 'ru-RU', fields: [ { id: 'work_type', name: 'Тип работ', values: [ { value: 'Отделка', keywords: ['отделка', 'штукатурка'] }, { value: 'Электрика', keywords: ['электрика', 'проводка'] }, { value: 'Сантехника', keywords: ['сантехника', 'трубы'] }, { value: 'Монолит', keywords: ['монолит', 'бетон'] } ] }, { id: 'status', name: 'Статус проверки', values: [ { value: 'Принято', keywords: ['принято', 'норма'] }, { value: 'Замечание', keywords: ['замечание', 'доработать'] }, { value: 'Критический дефект', keywords: ['критический дефект', 'брак', 'переделать'] } ] } ] },
+        'en-US': { language: 'en-US', fields: [ { id: 'work_type', name: 'Work Type', values: [ { value: 'Finishing', keywords: ['finishing', 'plaster'] }, { value: 'Electrical', keywords: ['electrical', 'wiring'] }, { value: 'Plumbing', keywords: ['plumbing', 'pipes'] } ] }, { id: 'status', name: 'Inspection Status', values: [ { value: 'Accepted', keywords: ['accepted', 'pass', 'ok'] }, { value: 'Remark', keywords: ['remark', 'rework'] }, { value: 'Critical Defect', keywords: ['critical defect', 'fail'] } ] } ] }
+    };
     let config = {};
     function saveConfig() { localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config)); }
     function loadConfig() { const s = localStorage.getItem(CONFIG_STORAGE_KEY); config = s ? JSON.parse(s) : JSON.parse(JSON.stringify(defaultConfigs['ru-RU'])); }
-    const setupContainer = document.getElementById('setup-container');
-    function renderSetupUI() { let langOptions = ''; Object.keys(defaultConfigs).forEach(langCode => { const langName = defaultConfigs[langCode].language.split('-')[0]; const langDisplayName = new Intl.DisplayNames(['en'], { type: 'language' }).of(langName); langOptions += `<option value="${langCode}" ${config.language === langCode ? 'selected' : ''}>${langDisplayName} (${langCode})</option>`; }); let fieldsHTML = ''; config.fields.forEach((field, fieldIndex) => { let valuesHTML = field.values.map((val, valueIndex) => `<div class="form-group"><input type="text" value="${val.value}" placeholder="Значение" data-action="update" data-type="value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><input type="text" value="${val.keywords.join(', ')}" placeholder="Ключевые слова" data-action="update" data-type="keywords" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><button class="secondary" data-action="remove-value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}">X</button></div>`).join(''); fieldsHTML += `<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 15px;"><h3>Поле: "${field.name}" <button class="secondary" style="float:right;" data-action="remove-field" data-field-index="${fieldIndex}">Удалить поле</button></h3>${valuesHTML}<button data-action="add-value" data-field-index="${fieldIndex}">Добавить значение</button></div>`; }); setupContainer.innerHTML = `<h2>Шаг 1: Настройте поля и язык</h2><div class="form-group"><label for="language-select">Язык:</label><select id="language-select">${langOptions}</select></div><hr style="margin: 20px 0;"><p style="text-align: center;">Настройте поля и ключевые слова для выбранного языка.</p><div id="fields-list">${fieldsHTML}</div><div style="background-color: #f0f8ff; padding: 15px; border-radius: 8px;"><h3>Добавить новое поле</h3><div class="form-group"><label for="new-field-name">Название поля:</label><input type="text" id="new-field-name"></div><button data-action="add-field">Добавить поле</button></div><button id="reset-config-btn" class="secondary" style="margin-top: 20px;">Сбросить настройки для языка</button><button id="start-working-btn">Шаг 2: Начать сортировку</button>`;}
-    setupContainer.addEventListener('click', (e) => { const action = e.target.dataset.action; if (!action && e.target.id !== 'reset-config-btn' && e.target.id !== 'start-working-btn') return; if (action === 'add-value') { config.fields[e.target.dataset.fieldIndex].values.push({ value: '', keywords: [] }); } else if (action === 'remove-value') { config.fields[e.target.dataset.fieldIndex].values.splice(e.target.dataset.valueIndex, 1); } else if (action === 'remove-field') { config.fields.splice(e.target.dataset.fieldIndex, 1); } else if (action === 'add-field') { const nameInput = document.getElementById('new-field-name'); const n = nameInput.value.trim(); if(n) { config.fields.push({ id: n.toLowerCase().replace(/[^a-z0-9]/g, '_') + Date.now(), name: n, values: [] }); } } else if (e.target.id === 'reset-config-btn') { if (confirm("Сбросить настройки для языка " + config.language + "?")) { config = JSON.parse(JSON.stringify(defaultConfigs[config.language] || defaultConfigs['en-US'])); saveConfig(); renderSetupUI(); } return; } else if (e.target.id === 'start-working-btn') { initializeSorter(); return; } saveConfig(); renderSetupUI(); });
-    setupContainer.addEventListener('change', (e) => { const { action, type, fieldIndex, valueIndex } = e.target.dataset; if (action === 'update') { if (type === 'keywords') { config.fields[fieldIndex].values[valueIndex][type] = e.target.value.split(',').map(kw => kw.trim().toLowerCase()).filter(Boolean); } else { config.fields[fieldIndex].values[valueIndex][type] = e.target.value; } saveConfig(); } else if (e.target.id === 'language-select') { const newLang = e.target.value; if (newLang !== config.language) { if (confirm(`Сменить язык на ${newLang} и загрузить примеры? Текущие поля будут заменены.`)) { config = JSON.parse(JSON.stringify(defaultConfigs[newLang] || defaultConfigs['en-US'])); saveConfig(); renderSetupUI(); } else { e.target.value = config.language; } } } });
 
-    // ======================= ЛОГИКА СОРТИРОВЩИКА =======================
-    const sorterContainer = document.getElementById('sorter-container');
-    let stats = {};
-    const dashboardContainer = document.getElementById('dashboard-container');
-    let currentItem = {}; let itemIdCounter = 1; let currentFieldIndex = 0;
-    let isListening = false; let isSessionActive = false; let isWaitingForTrigger = true;
-    const powerBtn = document.getElementById('power-btn');
-    const settingsBtn = document.getElementById('settings-btn');
-    const mainPromptArea = document.getElementById('main-prompt-area');
-    const tableHead = document.querySelector("#result-table thead"); const tableBody = document.querySelector("#result-table tbody");
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    if (SpeechRecognition) { recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = false; recognition.onstart = () => { isListening = true; }; recognition.onresult = (event) => { const command = event.results[event.results.length - 1][0].transcript; console.log('Распознано: "' + command.toLowerCase().trim() + '"'); processCommand(command); }; recognition.onend = () => { isListening = false; if (isSessionActive) { try { recognition.start(); } catch(e){}}}; recognition.onerror = (event) => { console.error("Ошибка распознавания:", event.error); isSessionActive = false; updatePowerButton(); renderPrompts(); }; }
-    
-    function initializeSorter() { if (!SpeechRecognition) { alert("Браузер не поддерживает речь"); return; } if (config.fields.length === 0) { alert("Добавьте поля!"); return; } recognition.lang = config.language; tableHead.innerHTML = `<tr><th>ID</th>${config.fields.map(f => `<th>${f.name}</th>`).join('')}</tr>`; tableBody.innerHTML = ''; itemIdCounter = 1; initDashboard(); resetCurrentItemToIdle(); setupContainer.style.display = 'none'; sorterContainer.style.display = 'block'; }
-    function resetCurrentItemToIdle() { currentItem = {}; isWaitingForTrigger = true; renderPrompts(); }
-    
-    function renderPrompts() {
-        mainPromptArea.innerHTML = '';
-        if (!isSessionActive) {
-            mainPromptArea.innerHTML = `<div class="prompt-row pending">Нажмите "Включить" для начала работы</div>`;
+    // ======================= ГОЛОСОВЫЕ ОТВЕТЫ (TTS) =======================
+    function speak(text) {
+        if (!document.getElementById('tts-toggle')?.checked || !('speechSynthesis' in window)) {
             return;
         }
-
-        config.fields.forEach((field, index) => {
-            const promptRow = document.createElement('div');
-            promptRow.className = 'prompt-row';
-            const value = currentItem[field.id];
-
-            if (value) {
-                // Поле уже заполнено
-                promptRow.classList.add('filled');
-                promptRow.innerHTML = `<span>${field.name}:</span><span class="value">${value}</span>`;
-            } else if (index === currentFieldIndex && !isWaitingForTrigger) {
-                // Текущий активный шаг
-                promptRow.classList.add('active');
-                let keywordsHTML = field.values.map(val => `<span>${val.keywords.join(' / ')}</span>`).join('');
-                promptRow.innerHTML = `<span>Скажите ${field.name.toLowerCase()}</span><div class="prompt-keywords">${keywordsHTML}</div>`;
-            } else {
-                // Ожидающий шаг
-                promptRow.classList.add('pending');
-                promptRow.textContent = field.name;
-            }
-            mainPromptArea.appendChild(promptRow);
-        });
-
-        if (isWaitingForTrigger) {
-            mainPromptArea.innerHTML = `<div class="prompt-row active">Скажите "Новый товар"</div>`;
-        }
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = config.language;
+        utterance.rate = 1.1;
+        window.speechSynthesis.speak(utterance);
     }
 
-    function processCommand(text) { const command = text.toLowerCase().trim(); const triggerWords = {"ru-RU": "новый товар", "en-US": "next item"}; const resetWords = {"ru-RU": "сброс", "en-US": "reset"}; const skipWords = {"ru-RU": "пропустить", "en-US": "skip"}; if (command.includes(resetWords[config.language])) { resetCurrentItemToIdle(); return; } if (isWaitingForTrigger) { if (command.includes(triggerWords[config.language])) { isWaitingForTrigger = false; currentFieldIndex = 0; let paramsFound = parseAllParams(command); if (paramsFound) { saveCurrentItem(); } else { renderPrompts(); } } } else { let processed = false; if (command.includes(skipWords[config.language]) && currentFieldIndex < config.fields.length) { currentFieldIndex++; processed = true; } else if (currentFieldIndex < config.fields.length) { const field = config.fields[currentFieldIndex]; for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; currentFieldIndex++; processed = true; break; } } if (processed) break; } } if (processed) { if (currentFieldIndex >= config.fields.length) { saveCurrentItem(); } else { renderPrompts(); } } } }
-    function saveCurrentItem() { const newRow = tableBody.insertRow(0); let rowHTML = `<td>${itemIdCounter}</td>`; config.fields.forEach(field => { rowHTML += `<td>${currentItem[field.id] || 'Пропущено'}</td>`; }); newRow.innerHTML = rowHTML; itemIdCounter++; updateDashboard(); resetCurrentItemToIdle(); }
-    function parseAllParams(command) { let foundSomething = false; config.fields.forEach(field => { for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; foundSomething = true; break; } } } }); if (foundSomething) renderPrompts(); return foundSomething; }
+    // ======================= ЛОГИКА КОНСТРУКТОРА =======================
+    const setupContainer = document.getElementById('setup-container');
+    function renderSetupUI() {
+        let langOptions = '';
+        Object.keys(defaultConfigs).forEach(langCode => {
+            const langName = new Intl.DisplayNames(['ru'], { type: 'language' }).of(langCode.split('-')[0]);
+            langOptions += `<option value="${langCode}" ${config.language === langCode ? 'selected' : ''}>${langName}</option>`;
+        });
+        setupContainer.innerHTML = `
+            <div class="instruction-box"><h3>Как это работает?</h3><p><b>Шаг 1:</b> Ниже вы видите поля, настроенные для инженера по качеству. Вы можете изменить их, добавить свои или удалить ненужные. Для каждого значения укажите голосовые команды через запятую.</p><p><b>Шаг 2:</b> Когда всё будет готово, нажмите большую зелёную кнопку <b>"Начать проверку"</b>, чтобы перейти к этапу голосового ввода данных.</p></div>
+            <h2>Настройки</h2><div class="form-group"><label for="language-select">Язык:</label><select id="language-select">${langOptions}</select></div><hr style="margin: 20px 0;"><div id="fields-list"></div>
+            <div style="background-color: #f0f8ff; padding: 15px; border-radius: 8px;"><h3 id="add-field-title">Добавить новое поле</h3><div class="form-group"><label for="new-field-name">Название поля:</label><input type="text" id="new-field-name"></div><button data-action="add-field">Добавить поле</button></div>
+            <button id="reset-config-btn" class="secondary" style="margin-top: 20px;">Сбросить настройки для языка</button>
+            <button id="start-working-btn" class="start-button-green">Начать проверку</button>`;
+        renderFields();
+    }
+    function renderFields() { let fieldsHTML = ''; config.fields.forEach((field, fieldIndex) => { let valuesHTML = field.values.map((val, valueIndex) => `<div class="form-group"><input type="text" value="${val.value}" placeholder="Значение" data-action="update" data-type="value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><input type="text" value="${val.keywords.join(', ')}" placeholder="Ключевые слова" data-action="update" data-type="keywords" data-field-index="${fieldIndex}" data-value-index="${valueIndex}"><button class="secondary" data-action="remove-value" data-field-index="${fieldIndex}" data-value-index="${valueIndex}">X</button></div>`).join(''); fieldsHTML += `<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 15px;"><h3>Поле: "${field.name}" <button class="secondary" style="float:right;" data-action="remove-field" data-field-index="${fieldIndex}">Удалить поле</button></h3>${valuesHTML}<button data-action="add-value" data-field-index="${fieldIndex}">Добавить значение</button></div>`; }); document.getElementById('fields-list').innerHTML = fieldsHTML; }
+    setupContainer.addEventListener('click', (e) => { const action = e.target.dataset.action; if (!action && e.target.id !== 'reset-config-btn' && e.target.id !== 'start-working-btn') return; if (action === 'add-value') { config.fields[e.target.dataset.fieldIndex].values.push({ value: '', keywords: [] }); } else if (action === 'remove-value') { config.fields[e.target.dataset.fieldIndex].values.splice(e.target.dataset.valueIndex, 1); } else if (action === 'remove-field') { config.fields.splice(e.target.dataset.fieldIndex, 1); } else if (action === 'add-field') { const nameInput = document.getElementById('new-field-name'); const n = nameInput.value.trim(); if(n) { config.fields.push({ id: n.toLowerCase().replace(/[^a-z0-9]/g, '_') + Date.now(), name: n, values: [] }); nameInput.value = ''; } } else if (e.target.id === 'reset-config-btn') { if (confirm("Сбросить настройки для языка " + config.language + "?")) { config = JSON.parse(JSON.stringify(defaultConfigs[config.language] || defaultConfigs['ru-RU'])); saveConfig(); renderSetupUI(); } return; } else if (e.target.id === 'start-working-btn') { initializeSorter(); return; } saveConfig(); renderFields(); });
+    setupContainer.addEventListener('change', (e) => { const { action, type, fieldIndex, valueIndex } = e.target.dataset; if (action === 'update') { if (type === 'keywords') { config.fields[fieldIndex].values[valueIndex][type] = e.target.value.split(',').map(kw => kw.trim().toLowerCase()).filter(Boolean); } else { config.fields[fieldIndex].values[valueIndex][type] = e.target.value; } saveConfig(); } else if (e.target.id === 'language-select') { const newLang = e.target.value; if (newLang !== config.language) { if (confirm(`Сменить язык на ${newLang} и загрузить примеры? Текущие поля будут заменены.`)) { config = JSON.parse(JSON.stringify(defaultConfigs[newLang] || defaultConfigs['ru-RU'])); saveConfig(); renderSetupUI(); } else { e.target.value = config.language; } } } });
+
+    // ======================= ЛОГИКА ИНСПЕКТОРА =======================
+    const sorterContainer = document.getElementById('sorter-container');
+    let stats = {}; let currentItem = {}; let itemIdCounter = 1; let currentFieldIndex = 0;
+    let isListening = false; let isSessionActive = false; let isWaitingForTrigger = true;
+    const startBtn = sorterContainer.querySelector('#startBtn');
+    const stopBtn = sorterContainer.querySelector('#stopBtn');
+    const statusDiv = sorterContainer.querySelector('#status');
+    const transcriptSpan = sorterContainer.querySelector('#transcript');
+    const tableHead = sorterContainer.querySelector("#result-table thead");
+    const tableBody = sorterContainer.querySelector("#result-table tbody");
+    const currentItemDisplay = sorterContainer.querySelector('#current-item-display');
+    const currentStepHeader = sorterContainer.querySelector('#current-step-header');
+    const hintsContainer = sorterContainer.querySelector('#hints-container');
+    const dashboardContainer = sorterContainer.querySelector('#dashboard-container');
+    const backToSetupBtn = sorterContainer.querySelector('#back-to-setup-btn');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) { recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = false; recognition.onstart = () => { isListening = true; statusDiv.className = 'status-listening'; startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block'; updateStatusAndHints(); }; recognition.onresult = (event) => { const command = event.results[event.results.length - 1][0].transcript; statusDiv.textContent = "Обрабатываю..."; statusDiv.className = 'status-processing'; processCommand(command); }; recognition.onend = () => { isListening = false; if (isSessionActive) { try { recognition.start(); } catch(e){}} else { statusDiv.textContent = "Смена закончена."; statusDiv.className = ''; startBtn.style.display = 'inline-block'; stopBtn.style.display = 'none'; speak("Смена закончена"); }}; recognition.onerror = (event) => { statusDiv.textContent = "Ошибка: " + event.error; statusDiv.className = 'status-error'; console.error(event); isSessionActive = false; speak("Произошла ошибка"); }; }
+    
+    // ИЗМЕНЕНО: Функция больше не перерисовывает HTML, а только настраивает и показывает его
+    function initializeSorter() { 
+        if (!SpeechRecognition) { alert("Браузер не поддерживает речь"); return; } 
+        if (config.fields.length === 0) { alert("Добавьте поля!"); return; } 
+        recognition.lang = config.language; 
+        tableHead.innerHTML = `<tr><th>ID</th>${config.fields.map(f => `<th>${f.name}</th>`).join('')}</tr>`; 
+        tableBody.innerHTML = ''; 
+        itemIdCounter = 1; 
+        initDashboard(); 
+        resetCurrentItemToIdle(); 
+        setupContainer.style.display = 'none'; 
+        sorterContainer.style.display = 'block'; 
+    }
+    
+    function resetCurrentItemToIdle() { currentItem = {}; isWaitingForTrigger = true; updateCurrentItemDisplay(); const readyMessages = {"ru-RU": "Готов к проверке. Скажите новый объект.", "en-US": "Ready for inspection. Say next object."}; speak(readyMessages[config.language] || readyMessages['en-US']); updateStatusAndHints(); }
+    function updateStatusAndHints() { if (!isSessionActive) return; const triggerWords = {"ru-RU": "Новый объект", "en-US": "Next object"}; const skipWords = {"ru-RU": "Пропустить", "en-US": "Skip"}; const resetWords = {"ru-RU": "Сброс", "en-US": "Reset"}; statusDiv.textContent = "Слушаю..."; hintsContainer.innerHTML = ''; if (isWaitingForTrigger) { currentStepHeader.textContent = `Скажите '${triggerWords[config.language]}', чтобы начать`; const hintEl = document.createElement('span'); hintEl.className = 'hint-keyword command'; hintEl.textContent = triggerWords[config.language]; hintsContainer.appendChild(hintEl); } else { const field = config.fields[currentFieldIndex]; const namePrompt = {"ru-RU": `Назовите ${field.name}`, "en-US": `State the ${field.name}`}; currentStepHeader.innerHTML = `Шаг ${currentFieldIndex + 1}: Назовите <b>${field.name}</b>`; field.values.forEach(val => { val.keywords.forEach(keyword => { const hintEl = document.createElement('span'); hintEl.className = 'hint-keyword'; hintEl.textContent = keyword; hintsContainer.appendChild(hintEl); }); }); hintsContainer.innerHTML += `<span class="hint-keyword command">${skipWords[config.language]}</span><span class="hint-keyword command">${resetWords[config.language]}</span>`; speak(namePrompt[config.language]); } }
+    function processCommand(text) { const command = text.toLowerCase().trim(); transcriptSpan.textContent = text; console.log('Распознано: "' + command + '"'); const triggerWords = {"ru-RU": "новый объект", "en-US": "next object"}; const resetWords = {"ru-RU": "сброс", "en-US": "reset"}; const skipWords = {"ru-RU": "пропустить", "en-US": "skip"}; if (command.includes(resetWords[config.language])) { speak("Сброшено"); resetCurrentItemToIdle(); return; } if (isWaitingForTrigger) { if (command.includes(triggerWords[config.language])) { isWaitingForTrigger = false; currentFieldIndex = 0; speak("Начинаю."); let paramsFound = parseAllParams(command); if (paramsFound) { saveCurrentItem(); } else { updateStatusAndHints(); } } } else { let processed = false; if (command.includes(skipWords[config.language]) && currentFieldIndex < config.fields.length) { speak(`Поле ${config.fields[currentFieldIndex].name} пропущено.`); currentFieldIndex++; processed = true; } else if (currentFieldIndex < config.fields.length) { const field = config.fields[currentFieldIndex]; for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; const acceptedMessages = {"ru-RU": "Принято", "en-US": "Accepted"}; speak(`${acceptedMessages[config.language]}: ${val.value}`); currentFieldIndex++; processed = true; break; } } if (processed) break; } } if (processed) { updateCurrentItemDisplay(); if (currentFieldIndex >= config.fields.length) { saveCurrentItem(); } else { updateStatusAndHints(); } } else { const notRecognized = {"ru-RU": "Команда не распознана", "en-US": "Command not recognized"}; speak(notRecognized[config.language]); statusDiv.textContent = `Команда "${text}" не распознана.`; statusDiv.className = 'status-error'; setTimeout(() => { if (isSessionActive) { statusDiv.className = 'status-listening'; updateStatusAndHints(); } }, 2500); } } }
+    function saveCurrentItem() { const newRow = tableBody.insertRow(0); let rowHTML = `<td>${itemIdCounter}</td>`; config.fields.forEach(field => { rowHTML += `<td>${currentItem[field.id] || 'Пропущено'}</td>`; }); newRow.innerHTML = rowHTML; itemIdCounter++; statusDiv.textContent = "Записано! Ожидаю следующий объект."; const savedMessages = {"ru-RU": "Объект записан", "en-US": "Object saved"}; speak(savedMessages[config.language]); updateDashboard(); resetCurrentItemToIdle(); }
+    function parseAllParams(command) { let foundSomething = false; config.fields.forEach(field => { for (const val of field.values) { for (const keyword of val.keywords) { if (command.includes(keyword)) { currentItem[field.id] = val.value; foundSomething = true; break; } } } }); if (foundSomething) updateCurrentItemDisplay(); return foundSomething; }
+    function updateCurrentItemDisplay() { currentItemDisplay.innerHTML = config.fields.map(field => { const value = currentItem[field.id]; const isFilled = !!value; return `<div class="field-value ${isFilled ? 'filled' : ''}"><strong>${field.name}:</strong> <span id="current-value-${field.id}">${value || '-'}</span></div>`; }).join(''); }
     function initDashboard() { stats = { total: 0 }; config.fields.forEach(field => { stats[field.id] = {}; field.values.forEach(val => { stats[field.id][val.value] = 0; }); }); renderDashboard(); }
     function updateDashboard() { stats.total++; config.fields.forEach(field => { const value = currentItem[field.id]; if (value && stats[field.id].hasOwnProperty(value)) { stats[field.id][value]++; } }); renderDashboard(); }
     function renderDashboard() { dashboardContainer.innerHTML = `<div class="dashboard-item"><div class="value">${stats.total}</div><div class="label">Всего</div></div>`; Object.keys(stats).forEach(statKey => { if(statKey === 'total') return; Object.keys(stats[statKey]).forEach(valueKey => { dashboardContainer.innerHTML += `<div class="dashboard-item"><div class="value">${stats[statKey][valueKey]}</div><div class="label">${valueKey}</div></div>`; }); }); }
     
-    function updatePowerButton() {
-        if(isSessionActive) {
-            powerBtn.textContent = 'Выключить';
-            powerBtn.className = 'on';
-        } else {
-            powerBtn.textContent = 'Включить';
-            powerBtn.className = 'off';
-        }
-    }
-
-    // --- Инициализация и обработчики кнопок ---
-    powerBtn.addEventListener('click', () => {
-        isSessionActive = !isSessionActive;
-        if(isSessionActive) {
-            if (recognition) recognition.start();
-        } else {
-            if (recognition) recognition.stop();
-        }
-        resetCurrentItemToIdle();
-        updatePowerButton();
-    });
-
-    settingsBtn.addEventListener('click', () => {
-        if(isSessionActive) {
-            isSessionActive = false;
-            if (recognition) recognition.stop();
-            updatePowerButton();
-        }
-        sorterContainer.style.display = 'none';
-        setupContainer.style.display = 'block';
-    });
-    
+    // --- Инициализация и глобальные обработчики ---
+    backToSetupBtn.addEventListener('click', () => { if(isSessionActive) { isSessionActive = false; recognition.stop(); } sorterContainer.style.display = 'none'; setupContainer.style.display = 'block'; });
+    startBtn.addEventListener('click', () => { if (recognition) { isSessionActive = true; recognition.start(); } }); 
+    stopBtn.addEventListener('click', () => { isSessionActive = false; if (recognition) { recognition.stop(); } });
     loadConfig();
     renderSetupUI();
+    
     </script>
 </body>
 </html>
